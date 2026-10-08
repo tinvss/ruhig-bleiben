@@ -7,14 +7,14 @@
 <title>Ruhig bleiben</title>
 <style>
   html, body {
-    margin: 0; height: 100%; overflow: hidden;
+    margin: 0; height: 100%; color-scheme: dark; overflow: hidden;
     background: #16263f; color: #fff;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-user-select: none; user-select: none;
     -webkit-tap-highlight-color: transparent;
     touch-action: none;
   }
-  #wrap { position: fixed; inset: 0; display: flex; justify-content: center; background: #0d1626; }
+  #wrap { position: fixed; left: 0; right: 0; top: env(safe-area-inset-top, 0px); bottom: env(safe-area-inset-bottom, 0px); display: flex; justify-content: center; background: #0d1626; }
   #game { position: relative; height: 100%; width: 100%; max-width: calc(100vh * 0.6); }
   canvas { display: block; width: 100%; height: 100%; }
   #ov {
@@ -29,7 +29,7 @@
   #ov p { margin: 0; font-size: clamp(20px, 5.5vw, 26px); line-height: 1.4; opacity: 0.9; white-space: pre-line; }
   #ov pre {
     margin: 0; font-family: inherit; font-size: clamp(18px, 5vw, 24px); line-height: 1.5;
-    background: rgba(255,255,255,0.1); padding: 16px 20px; border-radius: 16px; white-space: pre; text-align: left;
+    background: rgba(255,255,255,0.1); padding: 16px 20px; border-radius: 16px; white-space: pre; text-align: left; -webkit-user-select: text; user-select: text;
   }
   #ov button {
     font: inherit; font-size: clamp(22px, 6vw, 28px); font-weight: 600;
@@ -299,12 +299,16 @@
       </div>`, {
       share: async () => {
         const btn = ov.querySelector('#share');
+        try { await navigator.share({ text }); return; } catch (_) {}
         try {
-          if (navigator.share) { await navigator.share({ text }); return; }
           await navigator.clipboard.writeText(text);
           btn.textContent = 'Kopiert';
         } catch (_) {
-          if (btn && !navigator.share) btn.textContent = 'Kopieren ging nicht';
+          // Fallback: Text markieren, damit man ihn selbst kopieren kann
+          const sel = window.getSelection(), range = document.createRange();
+          range.selectNodeContents(ov.querySelector('pre'));
+          sel.removeAllRanges(); sel.addRange(range);
+          btn.textContent = 'Text markiert';
         }
       },
       again: () => { attempts = [0, 0, 0]; results = []; startLevel(0); },
